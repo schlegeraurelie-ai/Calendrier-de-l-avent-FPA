@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendrier de l'Avent péi — TP FPA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mag:#D71972; --ora:#ED7D31; --tur:#41B8AE; --turp:#1E7F78; --ant:#252525; --ivo:#FBF7EF;
+  --flam:#C8322B; --paille:#D9B26A; --paille2:#B98A3E; --paille3:#8E6526; --ok:#1E7F78; --ko:#B0124F;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{position:relative;min-height:100vh;font-family:"Open Sans",Arial,sans-serif;font-weight:400;color:var(--ant);background:var(--ivo);line-height:1.5;font-size:17px;overflow-x:hidden}
+button{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--mag);outline-offset:3px}
+
+/* ---------- décor ---------- */
+.arbres{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.arbre{position:absolute;opacity:.35}
+.a1{left:-60px;bottom:20px;width:460px}
+.a2{right:-60px;bottom:10px;width:500px;transform:scaleX(-1)}
+.a3{left:30%;bottom:40px;width:320px;opacity:.2}
+.a4{right:24%;top:32%;width:280px;opacity:.18}
+@media (max-width:900px){.a3,.a4{display:none}.a1{width:240px}.a2{width:260px}}
+.deco{position:absolute;pointer-events:none;z-index:0}
+.deco.left{top:-20px;left:-30px;width:320px}
+.deco.right{top:-20px;right:-30px;width:320px;transform:scaleX(-1)}
+.lagon{position:absolute;left:0;right:0;bottom:0;height:70px;z-index:0;pointer-events:none}
+
+header{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:130px 24px 8px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.titre h1{margin:0;color:var(--mag);font-weight:800;font-size:clamp(28px,4.2vw,46px);line-height:1.15}
+.titre .sous{margin:6px 0 0;font-size:19px;font-weight:600}
+.titre .consigne{margin:12px 0 0;max-width:640px;background:#fff;border-left:6px solid var(--tur);padding:10px 14px;border-radius:8px}
+.santa-wrap{position:relative;width:230px}
+.bulle{position:absolute;top:-6px;left:-150px;background:#fff;border:3px solid var(--turp);border-radius:18px;padding:8px 12px;font-weight:700;font-size:16px;width:170px;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.bulle:after{content:"";position:absolute;right:-14px;top:30px;border:8px solid transparent;border-left:12px solid var(--turp)}
+.santa{width:230px;height:auto;animation:balance 3.5s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes balance{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+
+main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:8px 24px 120px;display:grid;grid-template-columns:1fr 280px;gap:28px;align-items:start}
+.grille{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.bertel{position:relative;background:none;border:none;padding:0;cursor:pointer;border-radius:14px;transition:transform .15s}
+.bertel:hover:not([aria-disabled="true"]){transform:translateY(-4px) rotate(-1deg)}
+.bertel svg{width:100%;height:auto;display:block}
+.bertel .num{position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:#fff;border:3px solid var(--mag);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:21px;color:var(--ant)}
+.bertel[aria-disabled="true"]{cursor:not-allowed}
+.bertel[aria-disabled="true"] svg{filter:grayscale(.75) brightness(1.05);opacity:.6}
+.bertel .etat{position:absolute;right:4px;top:22%;width:34px;height:34px}
+.bertel.today .num{background:var(--mag);color:#fff;border-color:#fff;box-shadow:0 0 0 4px var(--ora)}
+
+aside.panier{position:sticky;top:16px;background:#fff;border-radius:18px;padding:16px;border:3px solid var(--tur);text-align:center}
+aside h2{margin:0 0 4px;color:var(--mag);font-size:22px}
+.compteur{font-size:18px;font-weight:700;margin:4px 0 8px}
+.panier svg{width:100%;height:auto}
+.legende{text-align:left;font-size:15px;margin:10px 0 0;padding:0;list-style:none}
+.legende li{display:flex;gap:8px;align-items:center;margin:4px 0}
+.legende svg{width:26px;height:26px;flex:none}
+
+footer{position:relative;z-index:1;text-align:center;padding:0 16px 90px;font-size:15px}
+footer .ause{font-weight:800;color:var(--mag)}
+.lien-test{background:none;border:none;text-decoration:none;color:var(--ant);font-size:14px;cursor:pointer;padding:4px 8px;border-bottom:1px dashed var(--ant)}
+
+/* ---------- fenêtre énigme ---------- */
+dialog{border:none;border-radius:20px;padding:0;max-width:680px;width:calc(100% - 24px);box-shadow:0 20px 60px rgba(0,0,0,.35);color:var(--ant)}
+dialog::backdrop{background:rgba(30,127,120,.55)}
+.d-tete{background:var(--mag);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.d-tete h2{margin:0;font-size:22px}
+.d-tete .type{font-size:15px;font-weight:600;background:#fff;color:var(--ant);border-radius:20px;padding:2px 12px}
+.fermer{background:#fff;color:var(--ant);border:none;border-radius:50%;width:38px;height:38px;font-size:22px;font-weight:800;cursor:pointer;flex:none}
+.d-corps{padding:18px 22px 8px;max-height:65vh;overflow:auto}
+.question{font-size:19px;font-weight:600;margin:0 0 14px}
+.zone label{display:block;font-weight:700;margin:10px 0 4px}
+.zone input[type=text],.zone textarea{width:100%;font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--ant);border-radius:10px;background:#fff}
+.zone textarea{min-height:80px}
+.choix{display:grid;gap:10px}
+.choix button,.multi button{text-align:left;padding:12px 14px;border:2px solid var(--ant);border-radius:12px;background:#fff;cursor:pointer;font-size:18px}
+.choix button[aria-pressed="true"],.multi button[aria-pressed="true"]{background:var(--turp);color:#fff;border-color:var(--turp);font-weight:700}
+.multi{display:grid;gap:10px}
+.multi button:before{content:"☐  "}
+.multi button[aria-pressed="true"]:before{content:"☑  "}
+.choix button:before{content:"○  "}
+.choix button[aria-pressed="true"]:before{content:"●  "}
+.banque{display:flex;flex-wrap:wrap;gap:8px;min-height:54px;padding:10px;border:2px dashed var(--turp);border-radius:12px;margin-bottom:12px;background:#F2FAF9}
+.puce{padding:8px 12px;border-radius:22px;background:#fff;border:2px solid var(--mag);font-weight:700;cursor:grab;font-size:16px}
+.puce[aria-pressed="true"]{background:var(--mag);color:#fff}
+.cible{display:grid;grid-template-columns:1fr minmax(160px,45%);gap:10px;align-items:center;margin:8px 0}
+.cible .txt{font-weight:600}
+.depot{min-height:46px;border:2px dashed var(--ant);border-radius:12px;padding:4px;display:flex;align-items:center;justify-content:center;background:#fff;cursor:pointer;font-size:15px}
+.depot.survol{background:#FCE8F1}
+.ordre{list-style:none;padding:0;margin:0;counter-reset:o}
+.ordre li{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--ant);border-radius:12px;padding:6px 8px;margin:6px 0;cursor:grab;font-weight:600}
+.ordre li:before{counter-increment:o;content:counter(o);background:var(--turp);color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex:none}
+.ordre li span{flex:1}
+.ordre li button{border:2px solid var(--ant);background:#fff;border-radius:8px;width:36px;height:34px;cursor:pointer;font-weight:800}
+.aide{font-size:15px;margin:0 0 8px}
+.d-pied{display:flex;flex-wrap:wrap;gap:10px;padding:12px 22px 18px;align-items:center}
+.btn{border:none;border-radius:12px;padding:11px 18px;font-weight:700;cursor:pointer;font-size:17px}
+.btn.valider{background:var(--mag);color:#fff}
+.btn.indice{background:#fff;border:2px solid var(--turp);color:var(--ant)}
+.btn.reponse{background:#fff;border:2px solid var(--ant)}
+.msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;font-weight:600}
+.msg.indice{background:#E7F6F4;border-left:6px solid var(--tur)}
+.msg.ko{background:#FCE8F1;border-left:6px solid var(--ko)}
+.msg.ok{background:var(--turp);color:#fff}
+.msg.vu{background:#fff;border:2px solid var(--ant)}
+.gagne{display:flex;align-items:center;gap:12px}
+.gagne svg{width:54px;height:54px;flex:none;animation:pop .6s ease-out}
+@keyframes pop{0%{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.mc{display:grid;gap:3px;margin:0 auto 14px;width:max-content;max-width:100%}
+.mc .case{position:relative;width:clamp(26px,6.2vw,38px);height:clamp(26px,6.2vw,38px)}
+.mc input{width:100%;height:100%;border:2px solid var(--ant);border-radius:5px;text-align:center;font:inherit;font-weight:700;font-size:clamp(15px,3.6vw,20px);text-transform:uppercase;padding:0;background:#fff;color:var(--ant)}
+.mc input.actif{background:#E7F6F4}
+.mc input.faux{background:#FCE8F1;border-color:var(--ko)}
+.mc .no{position:absolute;top:1px;left:3px;font-size:10px;font-weight:800;pointer-events:none}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px}
+.defs h3{margin:4px 0;font-size:17px;color:var(--mag)}
+.defs button{display:block;text-align:left;background:none;border:none;padding:4px 0;cursor:pointer;font-size:16px}
+.defs button strong{margin-right:4px}
+@media (max-width:520px){.defs{grid-template-columns:1fr}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (max-width:900px){
+  main{grid-template-columns:1fr}
+  aside.panier{position:relative;top:0;order:-1;display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;text-align:left}
+  .legende{display:none}
+  .grille{grid-template-columns:repeat(4,1fr)}
+  header{grid-template-columns:1fr}
+  .santa-wrap{justify-self:end;width:170px}.santa{width:170px}.bulle{left:-150px;width:150px;font-size:15px}
+  .deco{width:220px}
+}
+@media (max-width:520px){.grille{grid-template-columns:repeat(3,1fr)}.cible{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Branches de flamboyant décoratives -->
+<svg class="deco left" viewBox="0 0 340 200" aria-hidden="true"><use href="#branche"/></svg>
+<svg class="deco right" viewBox="0 0 340 200" aria-hidden="true"><use href="#branche"/></svg>
+<svg class="lagon" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 30 Q150 5 300 30 T600 30 T900 30 T1200 30 V70 H0Z" fill="#41B8AE" opacity=".35"/>
+  <path d="M0 45 Q150 22 300 45 T600 45 T900 45 T1200 45 V70 H0Z" fill="#1E7F78" opacity=".35"/>
+</svg>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- fleur de flamboyant -->
+    <g id="fleur">
+      <circle r="9" cx="0" cy="-8" fill="#C8322B"/><circle r="9" cx="8" cy="-2" fill="#E0442A"/>
+      <circle r="9" cx="5" cy="8" fill="#C8322B"/><circle r="9" cx="-5" cy="8" fill="#E0442A"/>
+      <circle r="9" cx="-8" cy="-2" fill="#C8322B"/><circle r="4" fill="#ED7D31"/>
+    </g>
+    <g id="branche">
+      <path d="M0 40 C80 60 150 50 230 90 S320 150 340 160" stroke="#6B4423" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M120 55 C140 20 170 15 200 10" stroke="#6B4423" stroke-width="5" fill="none"/>
+      <path d="M230 90 C250 60 280 55 300 50" stroke="#6B4423" stroke-width="5" fill="none"/>
+      <g fill="#3E8E3A">
+        <ellipse cx="60" cy="70" rx="30" ry="9" transform="rotate(20 60 70)"/><ellipse cx="160" cy="75" rx="28" ry="8" transform="rotate(-15 160 75)"/>
+        <ellipse cx="270" cy="125" rx="30" ry="9" transform="rotate(30 270 125)"/><ellipse cx="215" cy="30" rx="26" ry="8"/>
+      </g>
+      <use href="#fleur" x="30" y="35"/><use href="#fleur" x="95" y="45"/><use href="#fleur" x="135" y="35"/>
+      <use href="#fleur" x="185" y="15"/><use href="#fleur" x="205" y="70"/><use href="#fleur" x="245" y="95"/>
+      <use href="#fleur" x="290" y="55"/><use href="#fleur" x="310" y="140"/><use href="#fleur" x="70" y="25"/>
+    </g>
+<g id="flamboyant">
+      <g stroke="#5A3A1E" fill="none" stroke-linecap="round">
+      <path d="M200 318 C198 290 196 265 200 240" stroke-width="22"/>
+      <path d="M199 245 C185 215 150 195 110 175 C90 165 70 160 45 150" stroke-width="12"/>
+      <path d="M201 242 C196 205 192 170 196 135" stroke-width="11"/>
+      <path d="M202 245 C225 215 255 192 290 178 C315 168 335 160 360 150" stroke-width="12"/>
+      <path d="M150 198 C140 180 132 165 125 145" stroke-width="6"/><path d="M262 196 C272 178 280 160 285 140" stroke-width="6"/>
+      </g>
+      <circle cx="357" cy="82" r="14" fill="#3F8A35"/>
+      <circle cx="160" cy="91" r="12" fill="#5BAA47"/>
+      <circle cx="122" cy="149" r="14" fill="#5BAA47"/>
+      <circle cx="242" cy="128" r="16" fill="#3F8A35"/>
+      <circle cx="38" cy="112" r="15" fill="#3F8A35"/>
+      <circle cx="160" cy="167" r="13" fill="#3F8A35"/>
+      <circle cx="150" cy="80" r="13" fill="#356F2C"/>
+      <circle cx="339" cy="73" r="16" fill="#4C9A3F"/>
+      <circle cx="83" cy="170" r="15" fill="#4C9A3F"/>
+      <circle cx="286" cy="116" r="13" fill="#3F8A35"/>
+      <circle cx="103" cy="78" r="16" fill="#5BAA47"/>
+      <circle cx="150" cy="97" r="12" fill="#3F8A35"/>
+      <circle cx="197" cy="113" r="11" fill="#356F2C"/>
+      <circle cx="273" cy="64" r="12" fill="#4C9A3F"/>
+      <circle cx="101" cy="109" r="17" fill="#3F8A35"/>
+      <circle cx="158" cy="93" r="15" fill="#356F2C"/>
+      <circle cx="61" cy="125" r="15" fill="#356F2C"/>
+      <circle cx="328" cy="162" r="16" fill="#356F2C"/>
+      <circle cx="381" cy="117" r="10" fill="#356F2C"/>
+      <circle cx="201" cy="86" r="10" fill="#4C9A3F"/>
+      <circle cx="124" cy="82" r="14" fill="#5BAA47"/>
+      <circle cx="181" cy="156" r="15" fill="#4C9A3F"/>
+      <circle cx="339" cy="60" r="14" fill="#5BAA47"/>
+      <circle cx="285" cy="92" r="12" fill="#4C9A3F"/>
+      <circle cx="282" cy="48" r="16" fill="#5BAA47"/>
+      <circle cx="42" cy="106" r="11" fill="#356F2C"/>
+      <circle cx="58" cy="158" r="16" fill="#5BAA47"/>
+      <circle cx="193" cy="121" r="12" fill="#356F2C"/>
+      <circle cx="29" cy="84" r="15" fill="#5BAA47"/>
+      <circle cx="336" cy="145" r="10" fill="#5BAA47"/>
+      <circle cx="276" cy="159" r="15" fill="#356F2C"/>
+      <circle cx="95" cy="75" r="17" fill="#5BAA47"/>
+      <circle cx="334" cy="137" r="12" fill="#356F2C"/>
+      <circle cx="301" cy="148" r="14" fill="#5BAA47"/>
+      <circle cx="265" cy="167" r="14" fill="#4C9A3F"/>
+      <circle cx="130" cy="67" r="16" fill="#5BAA47"/>
+      <circle cx="154" cy="100" r="15" fill="#5BAA47"/>
+      <circle cx="389" cy="119" r="16" fill="#3F8A35"/>
+      <circle cx="178" cy="56" r="10" fill="#4C9A3F"/>
+      <circle cx="365" cy="123" r="16" fill="#5BAA47"/>
+      <circle cx="154" cy="62" r="13" fill="#3F8A35"/>
+      <circle cx="125" cy="136" r="12" fill="#5BAA47"/>
+      <circle cx="151" cy="47" r="16" fill="#356F2C"/>
+      <circle cx="116" cy="144" r="13" fill="#3F8A35"/>
+      <circle cx="58" cy="65" r="11" fill="#4C9A3F"/>
+      <circle cx="86" cy="88" r="14" fill="#3F8A35"/>
+      <circle cx="48" cy="159" r="13" fill="#356F2C"/>
+      <circle cx="308" cy="125" r="16" fill="#356F2C"/>
+      <circle cx="175" cy="101" r="16" fill="#356F2C"/>
+      <circle cx="107" cy="124" r="13" fill="#356F2C"/>
+      <circle cx="340" cy="150" r="11" fill="#4C9A3F"/>
+      <circle cx="259" cy="133" r="10" fill="#5BAA47"/>
+      <circle cx="105" cy="168" r="14" fill="#3F8A35"/>
+      <circle cx="242" cy="110" r="14" fill="#356F2C"/>
+      <circle cx="256" cy="143" r="13" fill="#5BAA47"/>
+      <circle cx="18" cy="101" r="10" fill="#4C9A3F"/>
+      <circle cx="369" cy="121" r="14" fill="#356F2C"/>
+      <circle cx="77" cy="123" r="11" fill="#4C9A3F"/>
+      <circle cx="284" cy="170" r="15" fill="#4C9A3F"/>
+      <circle cx="106" cy="157" r="15" fill="#356F2C"/>
+      <circle cx="96" cy="78" r="15" fill="#5BAA47"/>
+      <circle cx="42" cy="102" r="17" fill="#4C9A3F"/>
+      <circle cx="120" cy="57" r="17" fill="#5BAA47"/>
+      <circle cx="235" cy="51" r="14" fill="#356F2C"/>
+      <circle cx="307" cy="155" r="14" fill="#5BAA47"/>
+      <circle cx="114" cy="43" r="13" fill="#3F8A35"/>
+      <circle cx="80" cy="136" r="13" fill="#356F2C"/>
+      <circle cx="343" cy="105" r="11" fill="#3F8A35"/>
+      <circle cx="347" cy="89" r="10" fill="#356F2C"/>
+      <circle cx="254" cy="113" r="13" fill="#4C9A3F"/>
+      <circle cx="215" cy="60" r="15" fill="#5BAA47"/>
+      <circle cx="139" cy="147" r="15" fill="#356F2C"/>
+      <circle cx="184" cy="53" r="12" fill="#5BAA47"/>
+      <circle cx="267" cy="155" r="11" fill="#356F2C"/>
+      <circle cx="104" cy="63" r="14" fill="#5BAA47"/>
+      <circle cx="390" cy="96" r="16" fill="#3F8A35"/>
+      <circle cx="146" cy="92" r="10" fill="#5BAA47"/>
+      <circle cx="310" cy="172" r="15" fill="#356F2C"/>
+      <circle cx="358" cy="84" r="10" fill="#5BAA47"/>
+      <circle cx="272" cy="86" r="15" fill="#356F2C"/>
+      <circle cx="98" cy="160" r="12" fill="#3F8A35"/>
+      <circle cx="162" cy="150" r="13" fill="#4C9A3F"/>
+      <circle cx="32" cy="131" r="12" fill="#4C9A3F"/>
+      <circle cx="199" cy="140" r="11" fill="#356F2C"/>
+      <circle cx="146" cy="127" r="11" fill="#5BAA47"/>
+      <circle cx="344" cy="76" r="17" fill="#356F2C"/>
+      <circle cx="270" cy="140" r="17" fill="#5BAA47"/>
+      <circle cx="282" cy="161" r="12" fill="#3F8A35"/>
+      <circle cx="237" cy="67" r="14" fill="#3F8A35"/>
+      <circle cx="279" cy="76" r="14" fill="#5BAA47"/>
+      <circle cx="256" cy="38" r="17" fill="#3F8A35"/>
+      <circle cx="179" cy="44" r="12" fill="#3F8A35"/>
+      <circle cx="135" cy="101" r="15" fill="#356F2C"/>
+      <circle cx="219" cy="112" r="16" fill="#3F8A35"/>
+      <circle cx="200" cy="157" r="13" fill="#4C9A3F"/>
+      <circle cx="136" cy="131" r="12" fill="#3F8A35"/>
+      <circle cx="366" cy="136" r="15" fill="#4C9A3F"/>
+      <circle cx="240" cy="159" r="16" fill="#3F8A35"/>
+      <circle cx="193" cy="101" r="15" fill="#3F8A35"/>
+      <circle cx="338" cy="60" r="15" fill="#356F2C"/>
+      <circle cx="123" cy="60" r="11" fill="#5BAA47"/>
+      <circle cx="60" cy="136" r="17" fill="#356F2C"/>
+      <circle cx="306" cy="174" r="11" fill="#3F8A35"/>
+      <circle cx="216" cy="73" r="17" fill="#4C9A3F"/>
+      <circle cx="26" cy="106" r="12" fill="#356F2C"/>
+      <circle cx="54" cy="85" r="13" fill="#5BAA47"/>
+      <circle cx="146" cy="84" r="16" fill="#3F8A35"/>
+      <circle cx="46" cy="139" r="16" fill="#3F8A35"/>
+      <circle cx="207" cy="79" r="13" fill="#3F8A35"/>
+      <circle cx="126" cy="78" r="16" fill="#3F8A35"/>
+      <circle cx="244" cy="101" r="14" fill="#356F2C"/>
+      <circle cx="91" cy="156" r="10" fill="#4C9A3F"/>
+      <circle cx="379" cy="86" r="16" fill="#356F2C"/>
+      <circle cx="87" cy="142" r="12" fill="#356F2C"/>
+      <circle cx="358" cy="74" r="12" fill="#3F8A35"/>
+      <circle cx="98" cy="87" r="10" fill="#4C9A3F"/>
+      <circle cx="361" cy="114" r="13" fill="#356F2C"/>
+      <circle cx="155" cy="94" r="13" fill="#5BAA47"/>
+      <circle cx="58" cy="126" r="14" fill="#3F8A35"/>
+      <circle cx="69" cy="148" r="13" fill="#4C9A3F"/>
+      <circle cx="275" cy="98" r="16" fill="#5BAA47"/>
+      <circle cx="304" cy="158" r="13" fill="#4C9A3F"/>
+      <circle cx="242" cy="64" r="15" fill="#4C9A3F"/>
+      <circle cx="290" cy="152" r="16" fill="#4C9A3F"/>
+      <circle cx="278" cy="87" r="13" fill="#3F8A35"/>
+      <circle cx="350" cy="112" r="15" fill="#3F8A35"/>
+      <circle cx="109" cy="71" r="13" fill="#3F8A35"/>
+      <circle cx="363" cy="148" r="13" fill="#4C9A3F"/>
+      <circle cx="125" cy="103" r="17" fill="#3F8A35"/>
+      <circle cx="141" cy="65" r="12" fill="#4C9A3F"/>
+      <circle cx="98" cy="120" r="14" fill="#356F2C"/>
+      <circle cx="293" cy="143" r="12" fill="#3F8A35"/>
+      <circle cx="375" cy="125" r="11" fill="#5BAA47"/>
+      <circle cx="127" cy="124" r="13" fill="#3F8A35"/>
+      <circle cx="303" cy="116" r="15" fill="#4C9A3F"/>
+      <circle cx="15" cy="122" r="16" fill="#5BAA47"/>
+      <circle cx="185" cy="42" r="11" fill="#4C9A3F"/>
+      <circle cx="131" cy="150" r="12" fill="#356F2C"/>
+      <circle cx="305" cy="60" r="13" fill="#356F2C"/>
+      <circle cx="373" cy="133" r="11" fill="#3F8A35"/>
+      <ellipse cx="275" cy="154" rx="9" ry="3" fill="#2F6E2A" transform="rotate(25 275 154)"/>
+      <ellipse cx="292" cy="173" rx="9" ry="3" fill="#2F6E2A" transform="rotate(27 292 173)"/>
+      <ellipse cx="202" cy="163" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-30 202 163)"/>
+      <ellipse cx="173" cy="174" rx="9" ry="3" fill="#2F6E2A" transform="rotate(5 173 174)"/>
+      <ellipse cx="77" cy="174" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-4 77 174)"/>
+      <ellipse cx="86" cy="155" rx="9" ry="3" fill="#2F6E2A" transform="rotate(27 86 155)"/>
+      <ellipse cx="312" cy="170" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-18 312 170)"/>
+      <ellipse cx="249" cy="157" rx="9" ry="3" fill="#2F6E2A" transform="rotate(22 249 157)"/>
+      <ellipse cx="213" cy="151" rx="9" ry="3" fill="#2F6E2A" transform="rotate(23 213 151)"/>
+      <ellipse cx="355" cy="162" rx="9" ry="3" fill="#2F6E2A" transform="rotate(23 355 162)"/>
+      <ellipse cx="337" cy="168" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-27 337 168)"/>
+      <ellipse cx="245" cy="176" rx="9" ry="3" fill="#2F6E2A" transform="rotate(4 245 176)"/>
+      <ellipse cx="193" cy="162" rx="9" ry="3" fill="#2F6E2A" transform="rotate(19 193 162)"/>
+      <ellipse cx="232" cy="152" rx="9" ry="3" fill="#2F6E2A" transform="rotate(36 232 152)"/>
+      <ellipse cx="270" cy="163" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-10 270 163)"/>
+      <ellipse cx="55" cy="158" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-22 55 158)"/>
+      <ellipse cx="325" cy="161" rx="9" ry="3" fill="#2F6E2A" transform="rotate(5 325 161)"/>
+      <ellipse cx="202" cy="168" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-19 202 168)"/>
+      <ellipse cx="211" cy="173" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-22 211 173)"/>
+      <ellipse cx="296" cy="174" rx="9" ry="3" fill="#2F6E2A" transform="rotate(37 296 174)"/>
+      <ellipse cx="220" cy="173" rx="9" ry="3" fill="#2F6E2A" transform="rotate(22 220 173)"/>
+      <ellipse cx="123" cy="167" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-28 123 167)"/>
+      <ellipse cx="179" cy="171" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-37 179 171)"/>
+      <ellipse cx="194" cy="171" rx="9" ry="3" fill="#2F6E2A" transform="rotate(10 194 171)"/>
+      <ellipse cx="251" cy="166" rx="9" ry="3" fill="#2F6E2A" transform="rotate(23 251 166)"/>
+      <ellipse cx="63" cy="169" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-38 63 169)"/>
+      <ellipse cx="147" cy="179" rx="9" ry="3" fill="#2F6E2A" transform="rotate(17 147 179)"/>
+      <ellipse cx="340" cy="159" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-4 340 159)"/>
+      <ellipse cx="312" cy="172" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-14 312 172)"/>
+      <ellipse cx="239" cy="169" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-11 239 169)"/>
+      <ellipse cx="345" cy="159" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-31 345 159)"/>
+      <ellipse cx="90" cy="159" rx="9" ry="3" fill="#2F6E2A" transform="rotate(24 90 159)"/>
+      <ellipse cx="241" cy="161" rx="9" ry="3" fill="#2F6E2A" transform="rotate(-30 241 161)"/>
+      <circle cx="242" cy="112" r="5" fill="#E8382A"/>
+      <circle cx="155" cy="37" r="5" fill="#F04A2E"/>
+      <circle cx="148" cy="164" r="9" fill="#E8382A"/>
+      <circle cx="49" cy="65" r="6" fill="#C41E1A"/>
+      <circle cx="107" cy="44" r="10" fill="#F04A2E"/>
+      <circle cx="162" cy="129" r="7" fill="#C41E1A"/>
+      <circle cx="284" cy="40" r="5" fill="#D7261E"/>
+      <circle cx="344" cy="134" r="7" fill="#B51A16"/>
+      <circle cx="256" cy="76" r="9" fill="#B51A16"/>
+      <circle cx="251" cy="52" r="5" fill="#E8382A"/>
+      <circle cx="99" cy="79" r="5" fill="#B51A16"/>
+      <circle cx="128" cy="162" r="8" fill="#F04A2E"/>
+      <circle cx="205" cy="81" r="8" fill="#B51A16"/>
+      <circle cx="98" cy="117" r="11" fill="#F04A2E"/>
+      <circle cx="92" cy="140" r="7" fill="#D7261E"/>
+      <circle cx="67" cy="58" r="8" fill="#B51A16"/>
+      <circle cx="149" cy="81" r="7" fill="#D7261E"/>
+      <circle cx="271" cy="139" r="9" fill="#C41E1A"/>
+      <circle cx="87" cy="74" r="10" fill="#D7261E"/>
+      <circle cx="294" cy="102" r="9" fill="#B51A16"/>
+      <circle cx="356" cy="101" r="10" fill="#E8382A"/>
+      <circle cx="158" cy="86" r="8" fill="#E8382A"/>
+      <circle cx="174" cy="38" r="9" fill="#B51A16"/>
+      <circle cx="127" cy="170" r="6" fill="#E8382A"/>
+      <circle cx="305" cy="79" r="5" fill="#D7261E"/>
+      <circle cx="80" cy="107" r="9" fill="#F04A2E"/>
+      <circle cx="319" cy="85" r="11" fill="#C41E1A"/>
+      <circle cx="316" cy="107" r="9" fill="#C41E1A"/>
+      <circle cx="239" cy="52" r="9" fill="#B51A16"/>
+      <circle cx="111" cy="49" r="6" fill="#D7261E"/>
+      <circle cx="261" cy="41" r="6" fill="#F04A2E"/>
+      <circle cx="314" cy="101" r="9" fill="#F04A2E"/>
+      <circle cx="146" cy="107" r="7" fill="#F04A2E"/>
+      <circle cx="228" cy="38" r="7" fill="#B51A16"/>
+      <circle cx="142" cy="117" r="8" fill="#B51A16"/>
+      <circle cx="94" cy="93" r="7" fill="#F04A2E"/>
+      <circle cx="310" cy="59" r="10" fill="#E8382A"/>
+      <circle cx="241" cy="148" r="8" fill="#F04A2E"/>
+      <circle cx="49" cy="139" r="9" fill="#D7261E"/>
+      <circle cx="154" cy="105" r="11" fill="#E8382A"/>
+      <circle cx="219" cy="111" r="6" fill="#B51A16"/>
+      <circle cx="168" cy="76" r="11" fill="#D7261E"/>
+      <circle cx="79" cy="88" r="5" fill="#E8382A"/>
+      <circle cx="185" cy="151" r="7" fill="#D7261E"/>
+      <circle cx="201" cy="49" r="5" fill="#B51A16"/>
+      <circle cx="302" cy="91" r="11" fill="#E8382A"/>
+      <circle cx="92" cy="108" r="5" fill="#B51A16"/>
+      <circle cx="193" cy="38" r="11" fill="#E8382A"/>
+      <circle cx="13" cy="99" r="11" fill="#B51A16"/>
+      <circle cx="184" cy="99" r="11" fill="#C41E1A"/>
+      <circle cx="171" cy="100" r="11" fill="#F04A2E"/>
+      <circle cx="222" cy="61" r="6" fill="#E8382A"/>
+      <circle cx="181" cy="111" r="6" fill="#B51A16"/>
+      <circle cx="227" cy="96" r="11" fill="#F04A2E"/>
+      <circle cx="293" cy="123" r="9" fill="#D7261E"/>
+      <circle cx="277" cy="109" r="5" fill="#B51A16"/>
+      <circle cx="53" cy="70" r="6" fill="#C41E1A"/>
+      <circle cx="281" cy="72" r="7" fill="#E8382A"/>
+      <circle cx="57" cy="148" r="10" fill="#E8382A"/>
+      <circle cx="383" cy="130" r="7" fill="#E8382A"/>
+      <circle cx="92" cy="160" r="10" fill="#E8382A"/>
+      <circle cx="303" cy="110" r="7" fill="#C41E1A"/>
+      <circle cx="44" cy="118" r="9" fill="#F04A2E"/>
+      <circle cx="376" cy="98" r="9" fill="#C41E1A"/>
+      <circle cx="214" cy="59" r="11" fill="#C41E1A"/>
+      <circle cx="121" cy="43" r="6" fill="#C41E1A"/>
+      <circle cx="13" cy="132" r="9" fill="#E8382A"/>
+      <circle cx="259" cy="104" r="10" fill="#E8382A"/>
+      <circle cx="119" cy="118" r="9" fill="#E8382A"/>
+      <circle cx="98" cy="74" r="8" fill="#E8382A"/>
+      <circle cx="56" cy="97" r="8" fill="#B51A16"/>
+      <circle cx="226" cy="67" r="7" fill="#F04A2E"/>
+      <circle cx="276" cy="45" r="9" fill="#C41E1A"/>
+      <circle cx="182" cy="152" r="8" fill="#F04A2E"/>
+      <circle cx="165" cy="126" r="5" fill="#F04A2E"/>
+      <circle cx="289" cy="63" r="10" fill="#C41E1A"/>
+      <circle cx="93" cy="137" r="10" fill="#E8382A"/>
+      <circle cx="188" cy="39" r="7" fill="#E8382A"/>
+      <circle cx="387" cy="90" r="6" fill="#E8382A"/>
+      <circle cx="107" cy="47" r="9" fill="#E8382A"/>
+      <circle cx="254" cy="117" r="9" fill="#E8382A"/>
+      <circle cx="290" cy="56" r="11" fill="#F04A2E"/>
+      <circle cx="179" cy="72" r="10" fill="#B51A16"/>
+      <circle cx="261" cy="163" r="5" fill="#C41E1A"/>
+      <circle cx="249" cy="158" r="8" fill="#E8382A"/>
+      <circle cx="191" cy="42" r="7" fill="#E8382A"/>
+      <circle cx="234" cy="152" r="11" fill="#E8382A"/>
+      <circle cx="132" cy="85" r="8" fill="#D7261E"/>
+      <circle cx="203" cy="33" r="7" fill="#D7261E"/>
+      <circle cx="357" cy="80" r="9" fill="#F04A2E"/>
+      <circle cx="135" cy="44" r="6" fill="#F04A2E"/>
+      <circle cx="90" cy="81" r="7" fill="#C41E1A"/>
+      <circle cx="188" cy="71" r="7" fill="#B51A16"/>
+      <circle cx="317" cy="59" r="10" fill="#E8382A"/>
+      <circle cx="226" cy="42" r="5" fill="#E8382A"/>
+      <circle cx="76" cy="92" r="8" fill="#F04A2E"/>
+      <circle cx="105" cy="168" r="9" fill="#F04A2E"/>
+      <circle cx="22" cy="80" r="11" fill="#F04A2E"/>
+      <circle cx="298" cy="148" r="8" fill="#B51A16"/>
+      <circle cx="281" cy="74" r="7" fill="#F04A2E"/>
+      <circle cx="159" cy="40" r="8" fill="#E8382A"/>
+      <circle cx="235" cy="95" r="8" fill="#D7261E"/>
+      <circle cx="41" cy="125" r="7" fill="#E8382A"/>
+      <circle cx="331" cy="81" r="6" fill="#D7261E"/>
+      <circle cx="133" cy="42" r="8" fill="#F04A2E"/>
+      <circle cx="245" cy="75" r="9" fill="#E8382A"/>
+      <circle cx="256" cy="105" r="10" fill="#C41E1A"/>
+      <circle cx="260" cy="65" r="8" fill="#C41E1A"/>
+      <circle cx="305" cy="102" r="10" fill="#D7261E"/>
+      <circle cx="312" cy="77" r="5" fill="#E8382A"/>
+      <circle cx="186" cy="116" r="9" fill="#F04A2E"/>
+      <circle cx="99" cy="92" r="11" fill="#F04A2E"/>
+      <circle cx="253" cy="74" r="5" fill="#F04A2E"/>
+      <circle cx="38" cy="133" r="8" fill="#B51A16"/>
+      <circle cx="151" cy="127" r="6" fill="#B51A16"/>
+      <circle cx="158" cy="154" r="10" fill="#E8382A"/>
+      <circle cx="262" cy="92" r="10" fill="#F04A2E"/>
+      <circle cx="224" cy="82" r="9" fill="#F04A2E"/>
+      <circle cx="229" cy="42" r="11" fill="#B51A16"/>
+      <circle cx="163" cy="96" r="11" fill="#C41E1A"/>
+      <circle cx="233" cy="137" r="7" fill="#E8382A"/>
+      <circle cx="266" cy="65" r="6" fill="#C41E1A"/>
+      <circle cx="111" cy="100" r="6" fill="#B51A16"/>
+      <circle cx="136" cy="49" r="7" fill="#B51A16"/>
+      <circle cx="286" cy="70" r="7" fill="#B51A16"/>
+      <circle cx="121" cy="126" r="8" fill="#C41E1A"/>
+      <circle cx="211" cy="65" r="6" fill="#E8382A"/>
+      <circle cx="366" cy="103" r="6" fill="#E8382A"/>
+      <circle cx="295" cy="58" r="8" fill="#C41E1A"/>
+      <circle cx="211" cy="73" r="5" fill="#D7261E"/>
+      <circle cx="283" cy="106" r="9" fill="#F04A2E"/>
+      <circle cx="159" cy="35" r="9" fill="#F04A2E"/>
+      <circle cx="277" cy="39" r="10" fill="#B51A16"/>
+      <circle cx="218" cy="33" r="8" fill="#C41E1A"/>
+      <circle cx="338" cy="103" r="6" fill="#E8382A"/>
+      <circle cx="145" cy="77" r="9" fill="#B51A16"/>
+      <circle cx="165" cy="65" r="8" fill="#F04A2E"/>
+      <circle cx="143" cy="42" r="10" fill="#E8382A"/>
+      <circle cx="266" cy="78" r="11" fill="#D7261E"/>
+      <circle cx="195" cy="154" r="6" fill="#E8382A"/>
+      <circle cx="269" cy="142" r="9" fill="#B51A16"/>
+      <circle cx="49" cy="155" r="9" fill="#D7261E"/>
+      <circle cx="334" cy="112" r="9" fill="#D7261E"/>
+      <circle cx="331" cy="61" r="8" fill="#C41E1A"/>
+      <circle cx="48" cy="68" r="8" fill="#C41E1A"/>
+      <circle cx="234" cy="111" r="5" fill="#F04A2E"/>
+      <circle cx="314" cy="163" r="10" fill="#F04A2E"/>
+      <circle cx="364" cy="101" r="6" fill="#B51A16"/>
+      <circle cx="296" cy="108" r="10" fill="#B51A16"/>
+      <circle cx="192" cy="51" r="8" fill="#F04A2E"/>
+      <circle cx="132" cy="47" r="5" fill="#F04A2E"/>
+      <circle cx="259" cy="65" r="8" fill="#D7261E"/>
+      <circle cx="246" cy="40" r="5" fill="#F04A2E"/>
+      <circle cx="76" cy="66" r="10" fill="#C41E1A"/>
+      <circle cx="311" cy="106" r="7" fill="#C41E1A"/>
+      <circle cx="263" cy="51" r="8" fill="#E8382A"/>
+      <circle cx="308" cy="83" r="6" fill="#C41E1A"/>
+      <circle cx="298" cy="70" r="8" fill="#E8382A"/>
+      <circle cx="192" cy="38" r="5" fill="#B51A16"/>
+      <circle cx="90" cy="117" r="8" fill="#C41E1A"/>
+      <circle cx="353" cy="126" r="7" fill="#F04A2E"/>
+      <circle cx="323" cy="96" r="11" fill="#C41E1A"/>
+      <circle cx="73" cy="107" r="7" fill="#E8382A"/>
+      <circle cx="199" cy="102" r="6" fill="#B51A16"/>
+      <circle cx="156" cy="56" r="8" fill="#F04A2E"/>
+      <circle cx="61" cy="89" r="9" fill="#E8382A"/>
+      <circle cx="358" cy="153" r="8" fill="#F04A2E"/>
+      <circle cx="169" cy="41" r="7" fill="#F04A2E"/>
+      <circle cx="156" cy="83" r="10" fill="#F04A2E"/>
+      <circle cx="184" cy="71" r="10" fill="#D7261E"/>
+      <circle cx="108" cy="125" r="6" fill="#D7261E"/>
+      <circle cx="148" cy="38" r="7" fill="#C41E1A"/>
+      <circle cx="188" cy="92" r="8" fill="#C41E1A"/>
+      <circle cx="63" cy="113" r="5" fill="#E8382A"/>
+      <circle cx="375" cy="108" r="10" fill="#B51A16"/>
+      <circle cx="71" cy="56" r="10" fill="#F04A2E"/>
+      <circle cx="91" cy="65" r="5" fill="#F04A2E"/>
+      <circle cx="240" cy="165" r="10" fill="#E8382A"/>
+      <circle cx="114" cy="101" r="5" fill="#B51A16"/>
+      <circle cx="30" cy="86" r="10" fill="#C41E1A"/>
+      <circle cx="278" cy="104" r="5" fill="#C41E1A"/>
+      <circle cx="238" cy="42" r="9" fill="#E8382A"/>
+      <circle cx="335" cy="74" r="7" fill="#E8382A"/>
+      <circle cx="170" cy="55" r="8" fill="#F04A2E"/>
+      <circle cx="330" cy="79" r="6" fill="#E8382A"/>
+      <circle cx="55" cy="130" r="8" fill="#E8382A"/>
+      <circle cx="233" cy="109" r="10" fill="#B51A16"/>
+      <circle cx="280" cy="100" r="8" fill="#D7261E"/>
+      <circle cx="320" cy="51" r="7" fill="#F04A2E"/>
+      <circle cx="99" cy="79" r="6" fill="#B51A16"/>
+      <circle cx="75" cy="132" r="10" fill="#B51A16"/>
+      <circle cx="42" cy="79" r="10" fill="#E8382A"/>
+      <circle cx="152" cy="40" r="6" fill="#F04A2E"/>
+      <circle cx="50" cy="145" r="9" fill="#D7261E"/>
+      <circle cx="144" cy="157" r="9" fill="#C41E1A"/>
+      <circle cx="229" cy="160" r="6" fill="#B51A16"/>
+      <circle cx="66" cy="61" r="6" fill="#E8382A"/>
+      <circle cx="49" cy="83" r="8" fill="#C41E1A"/>
+      <circle cx="285" cy="43" r="10" fill="#E8382A"/>
+      <circle cx="143" cy="117" r="6" fill="#D7261E"/>
+      <circle cx="162" cy="39" r="8" fill="#B51A16"/>
+      <circle cx="295" cy="81" r="10" fill="#E8382A"/>
+      <circle cx="288" cy="57" r="9" fill="#F04A2E"/>
+      <circle cx="183" cy="71" r="11" fill="#B51A16"/>
+      <circle cx="147" cy="35" r="6" fill="#B51A16"/>
+      <circle cx="311" cy="100" r="9" fill="#B51A16"/>
+      <circle cx="321" cy="120" r="10" fill="#C41E1A"/>
+      <circle cx="327" cy="93" r="6" fill="#E8382A"/>
+      <circle cx="309" cy="163" r="9" fill="#C41E1A"/>
+      <circle cx="287" cy="110" r="9" fill="#C41E1A"/>
+      <circle cx="37" cy="124" r="7" fill="#C41E1A"/>
+      <circle cx="85" cy="59" r="11" fill="#C41E1A"/>
+      <circle cx="308" cy="48" r="11" fill="#D7261E"/>
+      <circle cx="212" cy="85" r="9" fill="#F04A2E"/>
+      <circle cx="184" cy="48" r="8" fill="#D7261E"/>
+      <circle cx="257" cy="69" r="9" fill="#C41E1A"/>
+      <circle cx="98" cy="44" r="5" fill="#B51A16"/>
+      <circle cx="89" cy="150" r="9" fill="#D7261E"/>
+      <circle cx="328" cy="77" r="9" fill="#B51A16"/>
+      <circle cx="289" cy="130" r="8" fill="#D7261E"/>
+      <circle cx="125" cy="94" r="8" fill="#C41E1A"/>
+      <circle cx="365" cy="80" r="11" fill="#E8382A"/>
+      <circle cx="230" cy="59" r="7" fill="#D7261E"/>
+      <circle cx="293" cy="44" r="11" fill="#E8382A"/>
+      <circle cx="33" cy="86" r="6" fill="#C41E1A"/>
+      <circle cx="277" cy="106" r="11" fill="#B51A16"/>
+      <circle cx="359" cy="104" r="8" fill="#F04A2E"/>
+      <circle cx="229" cy="78" r="8" fill="#D7261E"/>
+      <circle cx="29" cy="122" r="10" fill="#D7261E"/>
+      <circle cx="127" cy="166" r="9" fill="#F04A2E"/>
+      <circle cx="181" cy="82" r="9" fill="#C41E1A"/>
+      <circle cx="337" cy="59" r="7" fill="#D7261E"/>
+      <circle cx="285" cy="114" r="6" fill="#D7261E"/>
+      <circle cx="69" cy="129" r="11" fill="#E8382A"/>
+      <circle cx="33" cy="125" r="8" fill="#F04A2E"/>
+      <circle cx="259" cy="120" r="5" fill="#C41E1A"/>
+      <circle cx="300" cy="74" r="8" fill="#E8382A"/>
+      <circle cx="74" cy="55" r="7" fill="#B51A16"/>
+      <circle cx="152" cy="72" r="5" fill="#E8382A"/>
+      <circle cx="271" cy="55" r="8" fill="#C41E1A"/>
+      <circle cx="272" cy="107" r="7" fill="#B51A16"/>
+      <circle cx="323" cy="54" r="6" fill="#E8382A"/>
+      <circle cx="56" cy="113" r="9" fill="#B51A16"/>
+      <circle cx="381" cy="99" r="8" fill="#C41E1A"/>
+      <circle cx="116" cy="85" r="6" fill="#E8382A"/>
+      <circle cx="150" cy="114" r="5" fill="#E8382A"/>
+      <circle cx="50" cy="145" r="9" fill="#E8382A"/>
+      <circle cx="56" cy="114" r="5" fill="#C41E1A"/>
+      <circle cx="312" cy="86" r="8" fill="#B51A16"/>
+      <circle cx="169" cy="149" r="6" fill="#D7261E"/>
+      <circle cx="309" cy="164" r="8" fill="#B51A16"/>
+      <circle cx="386" cy="125" r="9" fill="#F04A2E"/>
+      <circle cx="184" cy="38" r="6" fill="#F04A2E"/>
+      <circle cx="108" cy="89" r="7" fill="#B51A16"/>
+      <circle cx="115" cy="112" r="7" fill="#E8382A"/>
+      <circle cx="306" cy="45" r="9" fill="#E8382A"/>
+      <circle cx="345" cy="76" r="7" fill="#B51A16"/>
+      <circle cx="209" cy="87" r="9" fill="#C41E1A"/>
+      <circle cx="366" cy="100" r="10" fill="#E8382A"/>
+      <circle cx="282" cy="87" r="6" fill="#C41E1A"/>
+      <circle cx="221" cy="118" r="11" fill="#E8382A"/>
+      <circle cx="92" cy="75" r="8" fill="#D7261E"/>
+      <circle cx="322" cy="58" r="6" fill="#C41E1A"/>
+      <circle cx="48" cy="81" r="8" fill="#B51A16"/>
+      <circle cx="266" cy="150" r="6" fill="#E8382A"/>
+      <circle cx="301" cy="69" r="8" fill="#D7261E"/>
+      <circle cx="312" cy="102" r="10" fill="#D7261E"/>
+      <circle cx="250" cy="90" r="10" fill="#E8382A"/>
+      <circle cx="23" cy="98" r="7" fill="#D7261E"/>
+      <circle cx="255" cy="71" r="6" fill="#D7261E"/>
+      <circle cx="112" cy="86" r="10" fill="#C41E1A"/>
+      <circle cx="155" cy="68" r="10" fill="#C41E1A"/>
+      <circle cx="297" cy="99" r="5" fill="#F04A2E"/>
+      <circle cx="255" cy="126" r="9" fill="#B51A16"/>
+      <circle cx="126" cy="49" r="10" fill="#C41E1A"/>
+      <circle cx="320" cy="85" r="6" fill="#E8382A"/>
+      <circle cx="355" cy="122" r="8" fill="#D7261E"/>
+      <circle cx="295" cy="69" r="6" fill="#D7261E"/>
+      <circle cx="382" cy="105" r="9" fill="#D7261E"/>
+      <circle cx="51" cy="79" r="8" fill="#D7261E"/>
+      <circle cx="188" cy="148" r="9" fill="#D7261E"/>
+      <circle cx="245" cy="48" r="5" fill="#D7261E"/>
+      <circle cx="66" cy="76" r="6" fill="#D7261E"/>
+      <circle cx="48" cy="64" r="6" fill="#B51A16"/>
+      <circle cx="172" cy="69" r="7" fill="#B51A16"/>
+      <circle cx="89" cy="136" r="11" fill="#D7261E"/>
+      <circle cx="51" cy="66" r="6" fill="#C41E1A"/>
+      <circle cx="106" cy="67" r="10" fill="#B51A16"/>
+      <circle cx="193" cy="95" r="6" fill="#D7261E"/>
+      <circle cx="155" cy="68" r="11" fill="#C41E1A"/>
+      <circle cx="59" cy="138" r="8" fill="#E8382A"/>
+      <circle cx="176" cy="38" r="8" fill="#E8382A"/>
+      <circle cx="127" cy="114" r="11" fill="#E8382A"/>
+      <circle cx="319" cy="63" r="5" fill="#C41E1A"/>
+      <circle cx="77" cy="141" r="9" fill="#D7261E"/>
+      <circle cx="272" cy="138" r="9" fill="#C41E1A"/>
+      <circle cx="177" cy="85" r="6" fill="#B51A16"/>
+      <circle cx="153" cy="136" r="8" fill="#F04A2E"/>
+      <circle cx="164" cy="61" r="7" fill="#E8382A"/>
+      <circle cx="47" cy="90" r="5" fill="#C41E1A"/>
+      <circle cx="253" cy="81" r="6" fill="#C41E1A"/>
+      <circle cx="199" cy="96" r="10" fill="#E8382A"/>
+      <circle cx="115" cy="92" r="5" fill="#B51A16"/>
+      <circle cx="107" cy="106" r="7" fill="#D7261E"/>
+      <circle cx="260" cy="60" r="10" fill="#E8382A"/>
+      <circle cx="133" cy="166" r="7" fill="#D7261E"/>
+      <circle cx="179" cy="119" r="9" fill="#B51A16"/>
+      <circle cx="110" cy="93" r="10" fill="#C41E1A"/>
+      <circle cx="60" cy="86" r="10" fill="#D7261E"/>
+      <circle cx="194" cy="45" r="7" fill="#D7261E"/>
+      <circle cx="139" cy="143" r="6" fill="#C41E1A"/>
+      <circle cx="241" cy="46" r="8" fill="#F04A2E"/>
+      <circle cx="248" cy="125" r="10" fill="#C41E1A"/>
+      <circle cx="183" cy="132" r="10" fill="#E8382A"/>
+      <circle cx="360" cy="71" r="10" fill="#F04A2E"/>
+      <circle cx="49" cy="107" r="8" fill="#B51A16"/>
+      <circle cx="271" cy="52" r="9" fill="#F04A2E"/>
+      <circle cx="281" cy="106" r="9" fill="#F04A2E"/>
+      <circle cx="93" cy="90" r="8" fill="#B51A16"/>
+      <circle cx="297" cy="67" r="7" fill="#E8382A"/>
+      <circle cx="58" cy="104" r="3" fill="#ED7D31"/>
+      <circle cx="46" cy="91" r="3" fill="#ED7D31"/>
+      <circle cx="81" cy="60" r="3" fill="#ED7D31"/>
+      <circle cx="256" cy="108" r="3" fill="#ED7D31"/>
+      <circle cx="31" cy="87" r="3" fill="#ED7D31"/>
+      <circle cx="283" cy="129" r="3" fill="#ED7D31"/>
+      <circle cx="116" cy="128" r="3" fill="#ED7D31"/>
+      <circle cx="312" cy="47" r="3" fill="#ED7D31"/>
+      <circle cx="158" cy="46" r="3" fill="#ED7D31"/>
+      <circle cx="389" cy="113" r="3" fill="#ED7D31"/>
+      <circle cx="267" cy="63" r="3" fill="#ED7D31"/>
+      <circle cx="112" cy="127" r="3" fill="#ED7D31"/>
+      <circle cx="61" cy="76" r="3" fill="#ED7D31"/>
+      <circle cx="78" cy="71" r="3" fill="#ED7D31"/>
+      <circle cx="176" cy="69" r="3" fill="#ED7D31"/>
+      <circle cx="340" cy="97" r="3" fill="#ED7D31"/>
+      <circle cx="54" cy="139" r="3" fill="#ED7D31"/>
+      <circle cx="100" cy="61" r="3" fill="#ED7D31"/>
+      <circle cx="215" cy="62" r="3" fill="#ED7D31"/>
+      <circle cx="263" cy="121" r="3" fill="#ED7D31"/>
+      <circle cx="152" cy="119" r="3" fill="#ED7D31"/>
+      <circle cx="35" cy="106" r="3" fill="#ED7D31"/>
+      <circle cx="129" cy="62" r="3" fill="#ED7D31"/>
+      <circle cx="192" cy="123" r="3" fill="#ED7D31"/>
+      <circle cx="256" cy="87" r="3" fill="#ED7D31"/>
+      <circle cx="365" cy="71" r="3" fill="#ED7D31"/>
+      <circle cx="274" cy="101" r="3" fill="#ED7D31"/>
+      <circle cx="201" cy="104" r="3" fill="#ED7D31"/>
+      <circle cx="371" cy="124" r="3" fill="#ED7D31"/>
+      <circle cx="170" cy="49" r="3" fill="#ED7D31"/>
+      <circle cx="103" cy="116" r="3" fill="#ED7D31"/>
+      <circle cx="58" cy="86" r="3" fill="#ED7D31"/>
+      <circle cx="177" cy="65" r="3" fill="#ED7D31"/>
+      <circle cx="191" cy="104" r="3" fill="#ED7D31"/>
+      <circle cx="289" cy="127" r="3" fill="#ED7D31"/>
+      <circle cx="219" cy="315" r="3.4" fill="#D7261E"/>
+      <circle cx="187" cy="316" r="2.4" fill="#B51A16"/>
+      <circle cx="293" cy="318" r="2.1" fill="#D7261E"/>
+      <circle cx="-34" cy="312" r="2.0" fill="#F04A2E"/>
+      <circle cx="317" cy="307" r="2.5" fill="#D7261E"/>
+      <circle cx="236" cy="311" r="3.5" fill="#F04A2E"/>
+      <circle cx="283" cy="311" r="2.7" fill="#B51A16"/>
+      <circle cx="203" cy="318" r="2.6" fill="#F04A2E"/>
+      <circle cx="269" cy="309" r="2.5" fill="#F04A2E"/>
+      <circle cx="240" cy="317" r="2.0" fill="#C41E1A"/>
+      <circle cx="201" cy="308" r="2.0" fill="#B51A16"/>
+      <circle cx="226" cy="314" r="2.8" fill="#E8382A"/>
+      <circle cx="244" cy="318" r="1.6" fill="#E8382A"/>
+      <circle cx="215" cy="317" r="2.6" fill="#F04A2E"/>
+      <circle cx="207" cy="307" r="3.3" fill="#F04A2E"/>
+      <circle cx="199" cy="308" r="2.0" fill="#B51A16"/>
+      <circle cx="150" cy="309" r="2.5" fill="#B51A16"/>
+      <circle cx="300" cy="307" r="3.0" fill="#E8382A"/>
+      <circle cx="262" cy="312" r="1.6" fill="#C41E1A"/>
+      <circle cx="153" cy="310" r="3.1" fill="#B51A16"/>
+      <circle cx="319" cy="311" r="3.3" fill="#C41E1A"/>
+      <circle cx="231" cy="310" r="1.6" fill="#F04A2E"/>
+      <circle cx="189" cy="312" r="3.0" fill="#F04A2E"/>
+      <circle cx="111" cy="315" r="3.3" fill="#B51A16"/>
+      <circle cx="195" cy="315" r="2.7" fill="#C41E1A"/>
+      <circle cx="170" cy="314" r="2.9" fill="#E8382A"/>
+      <circle cx="214" cy="316" r="2.0" fill="#D7261E"/>
+      <circle cx="137" cy="308" r="2.0" fill="#B51A16"/>
+      <circle cx="98" cy="316" r="1.5" fill="#C41E1A"/>
+      <circle cx="171" cy="312" r="1.9" fill="#C41E1A"/>
+      <circle cx="211" cy="317" r="2.9" fill="#C41E1A"/>
+      <circle cx="162" cy="317" r="2.8" fill="#B51A16"/>
+      <circle cx="69" cy="310" r="3.1" fill="#B51A16"/>
+      <circle cx="223" cy="311" r="1.5" fill="#D7261E"/>
+      <circle cx="224" cy="311" r="2.6" fill="#E8382A"/>
+      <circle cx="211" cy="308" r="2.2" fill="#F04A2E"/>
+      <circle cx="177" cy="318" r="1.7" fill="#B51A16"/>
+      <circle cx="189" cy="308" r="2.6" fill="#F04A2E"/>
+      <circle cx="316" cy="312" r="3.0" fill="#C41E1A"/>
+      <circle cx="104" cy="307" r="3.0" fill="#C41E1A"/>
+      <circle cx="199" cy="312" r="3.0" fill="#D7261E"/>
+      <circle cx="259" cy="311" r="2.8" fill="#B51A16"/>
+      <circle cx="239" cy="314" r="1.6" fill="#D7261E"/>
+      <circle cx="254" cy="308" r="2.8" fill="#E8382A"/>
+      <circle cx="293" cy="311" r="3.2" fill="#C41E1A"/>
+    </g>
+    <!-- letchi -->
+    <g id="letchi">
+      <path d="M0 -20 C4 -28 12 -30 18 -28 C12 -24 6 -22 0 -20Z" fill="#3E8E3A"/>
+      <path d="M0 -20 L0 -26" stroke="#6B4423" stroke-width="3"/>
+      <circle r="19" fill="#C62F3A"/>
+      <circle r="19" fill="url(#reflet)"/>
+      <g fill="#8E1D27">
+        <circle cx="-8" cy="-6" r="2.2"/><circle cx="2" cy="-10" r="2.2"/><circle cx="10" cy="-2" r="2.2"/>
+        <circle cx="-2" cy="2" r="2.2"/><circle cx="-10" cy="7" r="2.2"/><circle cx="7" cy="9" r="2.2"/><circle cx="0" cy="13" r="2.2"/>
+      </g>
+    </g>
+    <radialGradient id="reflet" cx=".35" cy=".3" r=".7">
+      <stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="tresse" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#D9B26A"/>
+      <path d="M0 0 H7 V7 H0Z M7 7 H14 V14 H7Z" fill="#C79A4D"/>
+      <path d="M0 7 H14 M7 0 V14" stroke="#A57C3A" stroke-width="1"/>
+    </pattern>
+    <!-- bertel -->
+    <g id="bertel">
+      <path d="M35 60 C30 10 90 10 85 60" stroke="#8E6526" stroke-width="7" fill="none"/>
+      <path d="M45 62 C42 25 78 25 75 62" stroke="#B98A3E" stroke-width="5" fill="none"/>
+      <path d="M14 56 H106 L98 140 Q60 150 22 140 Z" fill="url(#tresse)" stroke="#8E6526" stroke-width="3"/>
+      <path d="M14 56 H106 L104 72 H16Z" fill="#B98A3E" stroke="#8E6526" stroke-width="3"/>
+      <path d="M18 120 Q60 128 102 120" stroke="#D71972" stroke-width="5" fill="none"/>
+      <path d="M19 128 Q60 136 101 128" stroke="#41B8AE" stroke-width="4" fill="none"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="arbres" aria-hidden="true">
+  <svg class="arbre a1" viewBox="0 0 400 320"><use href="#flamboyant"/></svg>
+  <svg class="arbre a2" viewBox="0 0 400 320"><use href="#flamboyant"/></svg>
+  <svg class="arbre a3" viewBox="0 0 400 320"><use href="#flamboyant"/></svg>
+  <svg class="arbre a4" viewBox="0 0 400 320"><use href="#flamboyant"/></svg>
+</div>
+
+<header>
+  <div class="titre">
+    <h1>Calendrier de l'Avent péi</h1>
+    <p class="sous">TP Formateur professionnel d'adultes — décembre 2026</p>
+    <p class="consigne"><strong>Chaque jour, un bertel s'ouvre.</strong> Clique sur le bertel du jour, réponds à l'énigme et gagne <strong>un letchi</strong> pour ton panier.</p>
+  </div>
+  <div class="santa-wrap">
+    <div class="bulle" aria-hidden="true">Ho ho ho ! Ouvre ton bertel du jour !</div>
+    <svg class="santa" viewBox="0 0 200 260" role="img" aria-label="Père Noël en chemise à fleurs et short de bain, lunettes de soleil, qui tient un letchi">
+      <!-- jambes -->
+      <rect x="72" y="200" width="20" height="44" rx="8" fill="#F2C9A0"/><rect x="108" y="200" width="20" height="44" rx="8" fill="#F2C9A0"/>
+      <ellipse cx="80" cy="248" rx="18" ry="8" fill="#41B8AE"/><ellipse cx="120" cy="248" rx="18" ry="8" fill="#41B8AE"/>
+      <!-- short -->
+      <path d="M62 170 H138 L134 214 H104 L100 196 L96 214 H66Z" fill="#1E7F78"/>
+      <path d="M70 176 H130" stroke="#fff" stroke-width="3" stroke-dasharray="6 6"/>
+      <!-- chemise -->
+      <path d="M52 112 Q100 96 148 112 L144 178 H56Z" fill="#D71972"/>
+      <path d="M100 104 V178" stroke="#fff" stroke-width="2"/>
+      <path d="M88 104 L100 124 L112 104" fill="#fff"/>
+      <g fill="#fff"><circle cx="72" cy="130" r="5"/><circle cx="66" cy="126" r="3"/><circle cx="78" cy="125" r="3"/><circle cx="76" cy="135" r="3"/><circle cx="68" cy="136" r="3"/></g>
+      <g fill="#ED7D31"><circle cx="124" cy="150" r="5"/><circle cx="118" cy="146" r="3"/><circle cx="130" cy="146" r="3"/><circle cx="129" cy="156" r="3"/><circle cx="119" cy="156" r="3"/></g>
+      <g fill="#41B8AE"><circle cx="80" cy="162" r="4"/><circle cx="128" cy="122" r="4"/><circle cx="110" cy="166" r="3"/></g>
+      <!-- bras -->
+      <path d="M54 116 Q32 140 40 166" stroke="#D71972" stroke-width="20" fill="none" stroke-linecap="round"/>
+      <circle cx="41" cy="170" r="10" fill="#F2C9A0"/>
+      <path d="M146 116 Q172 100 170 74" stroke="#D71972" stroke-width="20" fill="none" stroke-linecap="round"/>
+      <circle cx="170" cy="68" r="10" fill="#F2C9A0"/>
+      <use href="#letchi" transform="translate(172 44) scale(.75)"/>
+      <!-- tête -->
+      <circle cx="100" cy="70" r="30" fill="#F2C9A0"/>
+      <path d="M68 76 Q70 122 100 118 Q130 122 132 76 Q118 92 100 88 Q82 92 68 76Z" fill="#fff" stroke="#E6E6E6"/>
+      <path d="M84 90 Q100 84 116 90 Q100 98 84 90Z" fill="#fff" stroke="#DDD"/>
+      <circle cx="100" cy="80" r="6" fill="#E59A8A"/>
+      <!-- lunettes -->
+      <rect x="76" y="60" width="20" height="13" rx="5" fill="#252525"/><rect x="104" y="60" width="20" height="13" rx="5" fill="#252525"/>
+      <path d="M96 66 H104" stroke="#252525" stroke-width="3"/>
+      <!-- bonnet -->
+      <path d="M68 50 Q80 10 120 18 Q140 24 150 46 L132 44 Q120 36 100 40 Q80 42 68 50Z" fill="#C8322B"/>
+      <rect x="64" y="44" width="72" height="12" rx="6" fill="#fff"/>
+      <circle cx="152" cy="48" r="9" fill="#fff"/>
+    </svg>
+  </div>
+</header>
+
+<main>
+  <section aria-labelledby="t-grille">
+    <h2 id="t-grille" class="sr">Les 25 bertels</h2>
+    <div class="grille" id="grille"></div>
+  </section>
+
+  <aside class="panier" aria-labelledby="t-panier">
+    <div>
+      <h2 id="t-panier">Mon panier</h2>
+      <p class="compteur" id="compteur" aria-live="polite">0 letchi sur 25</p>
+    </div>
+    <svg id="panierSvg" viewBox="0 0 240 190" role="img" aria-labelledby="panierAlt">
+      <title id="panierAlt">Panier en vacoa contenant les letchis gagnés</title>
+      <path d="M40 80 C40 0 200 0 200 80" stroke="#8E6526" stroke-width="9" fill="none"/>
+      <g id="tas"></g>
+      <path d="M20 80 H220 L198 176 Q120 188 42 176Z" fill="url(#tresse)" stroke="#8E6526" stroke-width="4"/>
+      <path d="M20 80 H220 L216 96 H24Z" fill="#B98A3E" stroke="#8E6526" stroke-width="4"/>
+      <path d="M30 150 Q120 162 210 150" stroke="#D71972" stroke-width="6" fill="none"/>
+    </svg>
+    <ul class="legende">
+      <li><svg viewBox="-22 -30 44 52" aria-hidden="true"><use href="#letchi"/></svg> Bonne réponse : 1 letchi</li>
+      <li><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="#1E7F78"/><path d="M8 15 L13 20 L22 10" stroke="#fff" stroke-width="3" fill="none"/></svg> Réponse vue, sans letchi</li>
+      <li><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="7" y="13" width="16" height="13" rx="3" fill="#252525"/><path d="M10 13 V9 a5 5 0 0 1 10 0 V13" stroke="#252525" stroke-width="3" fill="none"/></svg> Pas encore ouvert</li>
+    </ul>
+  </aside>
+</main>
+
+<footer>
+  <p>Une création <span class="ause">AUSE Formation</span> — Joyeuses fêtes !</p>
+  <button class="lien-test" id="btnTest" type="button">Mode formatrice</button>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dTitre">
+  <div class="d-tete">
+    <h2 id="dTitre">Jour 1</h2>
+    <span class="type" id="dType"></span>
+    <button class="fermer" id="dFermer" aria-label="Fermer">×</button>
+  </div>
+  <div class="d-corps">
+    <p class="question" id="dQuestion"></p>
+    <div class="zone" id="dZone"></div>
+    <div id="dMsg" aria-live="polite"></div>
+  </div>
+  <div class="d-pied" id="dPied"></div>
+</dialog>
+
+<dialog id="dlgTest" aria-labelledby="tTitre">
+  <div class="d-tete"><h2 id="tTitre">Mode formatrice</h2><button class="fermer" data-close aria-label="Fermer">×</button></div>
+  <div class="d-corps zone">
+    <p>Ce mode ouvre tous les bertels pour tester le calendrier.</p>
+    <label for="code">Code</label>
+    <input type="text" id="code" autocomplete="off">
+    <div id="tMsg" aria-live="polite"></div>
+  </div>
+  <div class="d-pied">
+    <button class="btn valider" id="tOk">Activer</button>
+    <button class="btn reponse" id="tReset">Vider mon panier</button>
+  </div>
+</dialog>
+
+<script>
+const ANNEE = 2026, CODE = "AUSE974", CLE = "avent-fpa-2026";
+
+const E = [
+ null,
+ {t:"Qui suis-je ?", q:"Le ministère du Travail me publie. Je décris un métier, ses activités et ses compétences. Mon petit frère, lui, dit comment on évalue. Qui suis-je ? Écris mon sigle.",
+  k:"fields", f:[{l:"Ma réponse", a:["reac","referentielemploiactivitescompetences"]}],
+  h:"Un sigle de 4 lettres. Ton titre en a un, millésime 07.",
+  x:"Le REAC : référentiel emploi activités compétences. Son petit frère est le RE, le référentiel d'évaluation."},
+ {t:"Décodage", q:"Glisse chaque définition sur le bon sigle.", k:"match",
+  chips:["Activité type","Compétence professionnelle","Certificat de compétences professionnelles","Évaluation en cours de formation","Dossier professionnel"],
+  targets:["AT","CP","CCP","ECF","DP"], sol:[0,1,2,3,4],
+  h:"Le DP, tu le rempliras avec tes exemples de stage.",
+  x:"AT = activité type. CP = compétence professionnelle. CCP = certificat de compétences professionnelles. ECF = évaluation en cours de formation. DP = dossier professionnel."},
+ {t:"L'intrus", q:"Lequel n'est pas un financement de formation ?", k:"choice",
+  o:["CPF","PTP","AIF","NDA"], c:3,
+  h:"L'un d'eux est un numéro que l'organisme de formation doit obtenir.",
+  x:"NDA : le numéro de déclaration d'activité. C'est une obligation de l'organisme de formation, pas un financement."},
+ {t:"Qui suis-je ?", q:"Je suis la certification qualité obligatoire pour qu'un organisme de formation reçoive des fonds publics ou mutualisés. Qui suis-je ?",
+  k:"fields", f:[{l:"Ma réponse", a:["qualiopi"]}],
+  h:"Mon nom commence comme le mot « qualité ».",
+  x:"Qualiopi : la certification qualité des organismes de formation."},
+ {t:"Qui suis-je ?", q:"Qui ? Quoi ? Où ? Quand ? Comment ? Combien ? Pourquoi ? On me résume souvent en QQOQCCP, mais je porte aussi le nom d'un orateur romain. Comment m'appelle-t-on ?",
+  k:"fields", f:[{l:"Ma réponse", c:["quintilien"]}],
+  h:"Son nom commence par Q, comme la première lettre du sigle.",
+  x:"La méthode quintilienne, aussi appelée QQOQCCP : qui, quoi, où, quand, comment, combien, pourquoi."},
+ {t:"Chiffres mystère", q:"Combien d'activités types et combien de compétences professionnelles compte le TP FPA ?",
+  k:"fields", f:[{l:"Nombre d'activités types", a:["4","quatre"]},{l:"Nombre de compétences professionnelles", a:["13","treize"]}],
+  h:"Regarde le sommaire de ton REAC.",
+  x:"4 activités types et 13 compétences professionnelles."},
+ {t:"Le bon mot", q:"Glisse le bon mot sur chaque phrase.", k:"match",
+  chips:["Prérequis","Pré-acquis"],
+  targets:["« Savoir lire pour entrer en formation »","« Elle utilise déjà Excel tous les jours »"], sol:[0,1],
+  h:"Pré-REQUIS : ce qui est exigé avant d'entrer.",
+  x:"Prérequis : le préalable nécessaire pour entrer. Pré-acquis : ce que la personne maîtrise déjà. (glossaire du REAC)"},
+ {t:"Qui suis-je ?", q:"Je dis où la formation mène l'apprenant, et je sers à en évaluer les effets. Qui suis-je ?", k:"choice",
+  o:["Le programme de formation","L'objectif de formation","Le cahier des charges","La progression"], c:1,
+  h:"Tu l'as défini en fin de CP1, avant de construire ta progression.",
+  x:"L'objectif de formation. (glossaire du REAC)"},
+ {t:"Remets dans l'ordre", q:"Remets les étapes d'une séquence dans un ordre logique. Glisse les étiquettes ou utilise les flèches.", k:"order",
+  items:["Enrôlement","Découverte","Apport","Application","Synthèse","Évaluation formative"],
+  h:"On commence par donner envie. On finit par vérifier ce qui est acquis.",
+  x:"Enrôlement → découverte → apport → application → synthèse → évaluation formative. L'apport peut aussi venir après l'application : les apprenants essaient d'abord, puis tu apportes la notion. Les deux ordres rapportent un letchi.", alt:[[0,1,3,2,4,5]]},
+ {t:"Progression ou scénario ?", q:"Glisse le bon mot sur chaque phrase.", k:"match",
+  chips:["Progression","Scénario"],
+  targets:["« Le planning de mes 6 semaines de formation, séquence par séquence »","« Le déroulé détaillé de ma séquence de 3 h »"], sol:[0,1],
+  h:"Toute la formation, c'est la CP1. L'intérieur d'une séquence, c'est la CP2.",
+  x:"Progression pour toute la formation. Scénario pour l'intérieur d'une séquence."},
+ {t:"Le verbe observable", q:"Lequel de ces verbes peut s'observer ?", k:"choice",
+  o:["Connaître","Comprendre","Citer","Savoir"], c:2,
+  h:"Lequel peux-tu voir et compter ?",
+  x:"Citer : on peut voir et compter ce que l'apprenant cite."},
+ {t:"Où je le note ?", q:"Pour ta séquence, tu prévois une salle avec des tables en îlots, un vidéoprojecteur et un jeu de cartes. Dans quelle partie de ton scénario notes-tu ces éléments ?", k:"choice",
+  o:["Les objectifs pédagogiques","Les moyens et la logistique","Les situations d'évaluation","Le scénario alternatif"], c:1,
+  h:"Ce sont des choses à réserver, à préparer ou à installer.",
+  x:"Les moyens et la logistique : la salle, son aménagement, le matériel et les supports dont tu as besoin pour ta séquence."},
+ {t:"Alternatif ou accompagnement ?", q:"Le 4 décembre, le centre est fermé. Je bascule ma journée à distance pour tout le groupe. De quel scénario s'agit-il ?", k:"choice",
+  o:["Le scénario alternatif","Le scénario d'accompagnement"], c:0,
+  h:"Je change mon scénario pour le groupe, ou j'aide une personne ?",
+  x:"Le scénario alternatif : je change mon scénario pour le groupe."},
+ {t:"Alternatif ou accompagnement ?", q:"Lucie a du mal à démarrer les activités. Pendant ta séquence, tu passes la voir et tu reformules la consigne avec elle. De quel scénario s'agit-il ?", k:"choice",
+  o:["Le scénario alternatif","Le scénario d'accompagnement"], c:1,
+  h:"Je change mon scénario pour le groupe, ou j'aide une personne ?",
+  x:"Le scénario d'accompagnement : j'aide une personne, sans changer le scénario du groupe."},
+ {t:"Vrai ou faux", q:"« Un apprenant doit dire à son formateur qu'il est en situation de handicap. »", k:"choice",
+  o:["Vrai","Faux"], c:1,
+  h:"Pense au rôle du référent handicap.",
+  x:"Faux : rien ne l'y oblige. S'il le souhaite, le référent handicap est son interlocuteur pour les aménagements."},
+ {t:"Défi FALC", q:"Que veut dire FALC ? Puis réécris cette phrase en FALC : « Il est impératif de procéder à une lecture exhaustive des documents avant toute manipulation. »", k:"fields",
+  f:[{l:"FALC veut dire…", all:["facile","lire","comprendre"]},{l:"Ma phrase réécrite", long:true}],
+  h:"F comme facile…",
+  x:"FALC : facile à lire et à comprendre. Exemple de phrase : « Lisez tous les documents. Ensuite, commencez. »"},
+ {t:"Qui suis-je ?", q:"Je suis courte, scénarisée, et je traite un seul sujet. Le glossaire du REAC me donne généralement moins de 6 minutes. Qui suis-je ?", k:"fields",
+  f:[{l:"Ma réponse", c:["capsule"]}],
+  h:"Mon nom fait penser à une petite boîte.",
+  x:"La capsule pédagogique."},
+ {t:"Qui suis-je ?", q:"Avant de tourner une capsule, on dessine chacun de ses plans sur moi. Qui suis-je ?", k:"fields",
+  f:[{l:"Ma réponse", c:["storyboard","scenarimage","story board"]}],
+  h:"Un mot anglais : story + board.",
+  x:"Le storyboard (en français : scénarimage)."},
+ {t:"Propriété intellectuelle", q:"Tu trouves une photo sous licence Creative Commons « CC BY ». Que dois-tu faire pour l'utiliser dans ton support ?", k:"choice",
+  o:["Rien, elle est libre","Citer son auteur","Payer son auteur","Demander une autorisation écrite"], c:1,
+  h:"BY veut dire « par » : la photo a été faite par quelqu'un.",
+  x:"Citer son auteur. La licence CC BY autorise la réutilisation à condition de mentionner l'auteur. Respecter la propriété intellectuelle fait partie des critères de la CP3."},
+ {t:"Défi REAC", q:"Présentiel et distance en même temps, et c'est l'apprenant qui choisit. Comment s'appelle cette modalité ?", k:"choice",
+  o:["La formation hybride","La formation comodale","La formation à distance","La formation en présentiel"], c:1,
+  h:"« Co » comme ensemble, « modale » comme modalité.",
+  x:"La formation comodale. (glossaire du REAC)"},
+ {t:"Quelle évaluation ?", q:"Au début de chaque CP, tu réponds à un quiz Tally pour faire le point sur ce que tu sais déjà. De quelle évaluation s'agit-il ?", k:"choice",
+  o:["Diagnostique","Formative","Sommative","Certificative"], c:0,
+  h:"Elle sert à faire un diagnostic avant d'apprendre.",
+  x:"L'évaluation diagnostique."},
+ {t:"Mots croisés", q:"Remplis la grille avec le vocabulaire de la formation, sans accents. Clique sur une définition pour aller au mot.", k:"cross",
+  rows:13, cols:12,
+  words:[
+   {n:1, r:0, c:5, d:"v", w:"OBJECTIF", l:"Il dit ce que l'apprenant sera capable de faire. On le formule avec un verbe observable."},
+   {n:2, r:2, c:7, d:"v", w:"SCENARIO", l:"Le déroulé détaillé d'une séquence, étape par étape."},
+   {n:3, r:5, c:9, d:"v", w:"SEQUENCE", l:"Partie de la progression construite autour d'un objectif pédagogique."},
+   {n:4, r:6, c:0, d:"h", w:"FACILITATEUR", l:"J'aide le groupe à trouver lui-même sa solution, sans décider à sa place. Qui suis-je ?"},
+   {n:5, r:6, c:2, d:"v", w:"CAPSULE", l:"Courte vidéo pédagogique, de moins de 6 minutes en général."},
+   {n:6, r:6, c:11, d:"v", w:"REAC", l:"Le référentiel qui décrit ton titre professionnel (sigle)."}
+  ],
+  h:"Commence par les mots que tu connais : le sigle de ton référentiel, puis la vidéo courte. Le 4 horizontal contient le mot « facile ».",
+  x:"1 objectif, 2 scénario, 3 séquence, 4 facilitateur, 5 capsule, 6 REAC. Le facilitateur aide le groupe à trouver sa solution : d'après le glossaire du REAC, il est accepté par tout le groupe, neutre sur le fond et sans pouvoir sur la décision."},
+ {t:"Défi REAC", q:"Jacques Rodet classe les besoins de l'apprenant à distance en 4 types. Sélectionne-les.", k:"multi",
+  o:["Cognitif","Socioaffectif","Motivationnel","Métacognitif","Financier","Administratif"], c:[0,1,2,3],
+  h:"Aucun n'a de lien avec l'argent ou les papiers.",
+  x:"Cognitif, socioaffectif, motivationnel, métacognitif. (glossaire du REAC, besoins tutoraux)"},
+ {t:"Qui suis-je ?", q:"Je suis l'organisme public qui tient le registre de tous les titres et diplômes professionnels reconnus en France, dont ton TP FPA. Qui suis-je ?", k:"choice",
+  o:["France Travail","France Compétences","Un OPCO","Le ministère de l'Éducation nationale"], c:1,
+  h:"Il gère le RNCP.",
+  x:"France Compétences, qui tient le RNCP (Répertoire national des certifications professionnelles)."},
+ {t:"Défi de Noël", q:"Écris en une phrase ce que tu veux réussir pendant ton stage 1, avec un verbe observable.", k:"fields",
+  f:[{l:"Mon objectif de stage", long:true}],
+  h:"Commence par un verbe qu'on peut voir : animer, présenter, concevoir…",
+  x:"Joyeux Noël ! Exemple : « Animer seul une séquence de 2 h avec mon scénario. » Garde ta phrase : elle t'aidera à préparer ton stage."}
+];
+
+const ORDRE_GRILLE = [7,14,3,21,10,1,18,24,5,12,25,9,16,2,20,11,6,23,13,4,19,8,15,22,17];
+
+/* ---------- état ---------- */
+let S = {won:{}, seen:{}, test:false};
+try{ const r = localStorage.getItem(CLE); if(r) S = Object.assign(S, JSON.parse(r)); }catch(e){}
+function save(){ try{ localStorage.setItem(CLE, JSON.stringify(S)); }catch(e){} }
+
+function ouvert(j){ return S.test || new Date() >= new Date(ANNEE, 11, j); }
+function estAujourdhui(j){ const d=new Date(); return d.getFullYear()===ANNEE && d.getMonth()===11 && d.getDate()===j; }
+const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"");
+const melange = a => { const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+
+/* ---------- grille ---------- */
+const grille = document.getElementById("grille");
+function dessinerGrille(){
+  grille.innerHTML = "";
+  ORDRE_GRILLE.forEach(j=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="bertel"+(estAujourdhui(j)?" today":"");
+    const ok = ouvert(j), w = S.won[j], s = S.seen[j];
+    let etat = ok ? (w ? "letchi gagné" : s ? "réponse vue" : "à ouvrir") : "pas encore ouvert";
+    b.setAttribute("aria-label", `Bertel du ${j} décembre, ${etat}`);
+    if(!ok) b.setAttribute("aria-disabled","true");
+    let icone = "";
+    if(w) icone = `<svg class="etat" viewBox="-22 -30 44 52" aria-hidden="true"><use href="#letchi"/></svg>`;
+    else if(s) icone = `<svg class="etat" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="#1E7F78"/><path d="M8 15 L13 20 L22 10" stroke="#fff" stroke-width="3" fill="none"/></svg>`;
+    else if(!ok) icone = `<svg class="etat" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#fff"/><rect x="7" y="13" width="16" height="12" rx="3" fill="#252525"/><path d="M10 13 V9 a5 5 0 0 1 10 0 V13" stroke="#252525" stroke-width="3" fill="none"/></svg>`;
+    b.innerHTML = `<svg viewBox="0 0 120 150" aria-hidden="true"><use href="#bertel"/></svg><span class="num" aria-hidden="true">${j}</span>${icone}`;
+    b.addEventListener("click", ()=> ok ? ouvrir(j) : patience(j));
+    grille.appendChild(b);
+  });
+  dessinerPanier();
+}
+
+function dessinerPanier(){
+  const n = Object.keys(S.won).length;
+  document.getElementById("compteur").textContent = `${n} letchi${n>1?"s":""} sur 25`;
+  const tas = document.getElementById("tas"); tas.innerHTML = "";
+  const pos = [];
+  const rangs = [[8,74],[7,58],[6,42],[4,26]];
+  rangs.forEach(([nb,y],r)=>{ for(let i=0;i<nb;i++){ const span=170-r*25; pos.push([120-span/2+ (nb>1? i*span/(nb-1):span/2) + (r%2?6:0), y]); } });
+  for(let i=0;i<n;i++){
+    const [x,y] = pos[i];
+    const u = document.createElementNS("http://www.w3.org/2000/svg","use");
+    u.setAttribute("href","#letchi"); u.setAttribute("transform",`translate(${x} ${y}) scale(.68) rotate(${(i*37)%40-20})`);
+    tas.appendChild(u);
+  }
+  document.getElementById("panierAlt").textContent = `Panier en vacoa contenant ${n} letchi${n>1?"s":""}`;
+}
+
+/* ---------- fenêtre ---------- */
+const dlg = document.getElementById("dlg");
+const $ = id => document.getElementById(id);
+let courant = null, essais = 0, lire = null;
+
+function patience(j){
+  courant = null;
+  $("dTitre").textContent = `${j} décembre`;
+  $("dType").textContent = "Patience !";
+  $("dQuestion").textContent = `Ce bertel s'ouvre le ${j} décembre. Reviens ce jour-là !`;
+  $("dZone").innerHTML = ""; $("dMsg").innerHTML = "";
+  $("dPied").innerHTML = `<button class="btn valider" id="bOk">D'accord</button>`;
+  $("bOk").onclick = ()=>dlg.close();
+  dlg.showModal();
+}
+
+function ouvrir(j){
+  courant = j; essais = 0;
+  const e = E[j];
+  $("dTitre").textContent = `${j} décembre`;
+  $("dType").textContent = e.t;
+  $("dQuestion").textContent = e.q;
+  $("dMsg").innerHTML = "";
+  const z = $("dZone"); z.innerHTML = "";
+  lire = construire(e, z);
+  const fini = S.won[j] || S.seen[j];
+  piedNormal(fini);
+  if(fini){ z.innerHTML = ""; montrerFin(!!S.won[j], false); }
+  dlg.showModal();
+}
+
+function piedNormal(fini){
+  const p = $("dPied");
+  p.innerHTML = fini ? `<button class="btn valider" id="bFermer">Fermer</button>` :
+    `<button class="btn valider" id="bValider">Valider</button><button class="btn indice" id="bIndice">Indice</button>`;
+  if(fini){ $("bFermer").onclick=()=>dlg.close(); return; }
+  $("bValider").onclick = valider;
+  $("bIndice").onclick = ()=>{ $("dMsg").innerHTML = `<p class="msg indice"><strong>Indice :</strong> ${E[courant].h}</p>`; };
+}
+
+function valider(){
+  const e = E[courant], r = lire();
+  if(r === null){ $("dMsg").innerHTML = `<p class="msg ko">Complète ta réponse avant de valider.</p>`; return; }
+  if(r){
+    S.won[courant] = true; save();
+    montrerFin(true, true); dessinerGrille();
+  } else {
+    essais++;
+    let t = `<p class="msg ko">Pas encore… Essaie encore !</p>`;
+    $("dMsg").innerHTML = t;
+    if(essais >= 2 && !$("bVoir")){
+      const b = document.createElement("button");
+      b.className="btn reponse"; b.id="bVoir"; b.textContent="Voir la réponse";
+      b.onclick = ()=>{ S.seen[courant]=true; save(); montrerFin(false, true); dessinerGrille(); };
+      $("dPied").appendChild(b);
+    }
+  }
+}
+
+function montrerFin(gagne, nouveau){
+  const e = E[courant];
+  $("dZone").querySelectorAll("input,textarea,button").forEach(el=>el.disabled=true);
+  $("dZone").querySelectorAll("[draggable]").forEach(el=>el.draggable=false);
+  $("dMsg").innerHTML = gagne
+    ? `<div class="msg ok gagne"><svg viewBox="-22 -30 44 52" aria-hidden="true"><use href="#letchi"/></svg><div>${nouveau?"<strong>Bravo, un letchi pour ton panier !</strong><br>":"<strong>Letchi déjà gagné.</strong><br>"}${e.x}</div></div>`
+    : `<p class="msg vu"><strong>La réponse :</strong> ${e.x}<br>Pas de letchi cette fois, mais tu sais maintenant !</p>`;
+  $("dPied").innerHTML = `<button class="btn valider" id="bFermer">Fermer</button>`;
+  $("bFermer").onclick=()=>dlg.close();
+  $("bFermer").focus();
+}
+
+$("dFermer").onclick = ()=>dlg.close();
+
+/* ---------- types d'énigmes ---------- */
+function construire(e, z){
+  if(e.k==="fields") return fFields(e,z);
+  if(e.k==="choice") return fChoice(e,z,false);
+  if(e.k==="multi") return fChoice(e,z,true);
+  if(e.k==="match") return fMatch(e,z);
+  if(e.k==="order") return fOrder(e,z);
+  if(e.k==="cross") return fCross(e,z);
+}
+
+function fFields(e,z){
+  const ins = e.f.map((f,i)=>{
+    const id="champ"+i;
+    const lab=document.createElement("label"); lab.htmlFor=id; lab.textContent=f.l; z.appendChild(lab);
+    const el=document.createElement(f.long?"textarea":"input"); if(!f.long) el.type="text";
+    el.id=id; el.autocomplete="off"; z.appendChild(el);
+    el.addEventListener("keydown",ev=>{ if(ev.key==="Enter" && !f.long){ ev.preventDefault(); $("bValider") && $("bValider").click(); }});
+    return el;
+  });
+  return ()=>{
+    if(ins.some((el,i)=>el.value.trim().length < ((e.f[i].a||e.f[i].c||e.f[i].all) ? 1 : 2))) return null;
+    return e.f.every((f,i)=>{
+      const v = norm(ins[i].value);
+      if(f.a) return f.a.some(a=>v===norm(a));
+      if(f.c) return f.c.some(a=>v.includes(norm(a)));
+      if(f.all) return f.all.every(a=>v.includes(norm(a)));
+      return true;
+    });
+  };
+}
+
+function fChoice(e,z,multi){
+  const box=document.createElement("div"); box.className=multi?"multi":"choix";
+  box.setAttribute("role","group"); box.setAttribute("aria-label", multi?"Plusieurs réponses possibles":"Une seule réponse");
+  if(multi){ const p=document.createElement("p"); p.className="aide"; p.textContent="Plusieurs réponses possibles : clique sur chacune."; z.appendChild(p); }
+  const bs = e.o.map((o,i)=>{
+    const b=document.createElement("button"); b.type="button"; b.textContent=o; b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{
+      if(multi) b.setAttribute("aria-pressed", b.getAttribute("aria-pressed")==="true"?"false":"true");
+      else bs.forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+    };
+    box.appendChild(b); return b;
+  });
+  z.appendChild(box);
+  return ()=>{
+    const sel = bs.map((b,i)=>b.getAttribute("aria-pressed")==="true"?i:-1).filter(i=>i>=0);
+    if(!sel.length) return null;
+    if(multi) return sel.length===e.c.length && e.c.every(i=>sel.includes(i));
+    return sel[0]===e.c;
+  };
+}
+
+function fMatch(e,z){
+  const aide=document.createElement("p"); aide.className="aide";
+  aide.textContent="Glisse une étiquette sur sa place. Ou bien clique sur une étiquette, puis sur sa place.";
+  z.appendChild(aide);
+  const banque=document.createElement("div"); banque.className="banque"; banque.setAttribute("aria-label","Étiquettes à placer");
+  z.appendChild(banque);
+  const place = e.targets.map(()=>null);
+  let choisie = null;
+  const puces = e.chips.map((c,i)=>{
+    const b=document.createElement("button"); b.type="button"; b.className="puce"; b.textContent=c; b.draggable=true; b.dataset.i=i;
+    b.setAttribute("aria-pressed","false");
+    b.addEventListener("dragstart",ev=>{ ev.dataTransfer.setData("text/plain", String(i)); });
+    b.onclick=()=>{
+      const z0 = place.indexOf(i);
+      if(z0>=0){ place[z0]=null; rendre(); return; }
+      choisie = choisie===i ? null : i; rendre();
+    };
+    return b;
+  });
+  const depots = e.targets.map((t,k)=>{
+    const row=document.createElement("div"); row.className="cible";
+    const tx=document.createElement("div"); tx.className="txt"; tx.textContent=t;
+    const d=document.createElement("div"); d.className="depot"; d.tabIndex=0; d.setAttribute("role","button");
+    d.setAttribute("aria-label",`Place pour : ${t}`);
+    const poser = i=>{ const o=place.indexOf(i); if(o>=0) place[o]=null; place[k]=i; choisie=null; rendre(); };
+    d.addEventListener("dragover",ev=>{ev.preventDefault(); d.classList.add("survol");});
+    d.addEventListener("dragleave",()=>d.classList.remove("survol"));
+    d.addEventListener("drop",ev=>{ev.preventDefault(); d.classList.remove("survol"); poser(+ev.dataTransfer.getData("text/plain"));});
+    d.onclick=ev=>{ if(ev.target!==d) return; if(choisie!==null) poser(choisie); };
+    d.onkeydown=ev=>{ if((ev.key==="Enter"||ev.key===" ") && choisie!==null){ ev.preventDefault(); poser(choisie);} };
+    row.append(tx,d); z.appendChild(row); return d;
+  });
+  banque.addEventListener("dragover",ev=>ev.preventDefault());
+  banque.addEventListener("drop",ev=>{ ev.preventDefault(); const i=+ev.dataTransfer.getData("text/plain"); const o=place.indexOf(i); if(o>=0){place[o]=null; rendre();} });
+  function rendre(){
+    banque.innerHTML="";
+    melangees.forEach(i=>{ if(!place.includes(i)) banque.appendChild(puces[i]); });
+    depots.forEach((d,k)=>{ d.innerHTML=""; if(place[k]!==null) d.appendChild(puces[place[k]]); else d.textContent="Dépose ici"; });
+    puces.forEach((p,i)=>p.setAttribute("aria-pressed", choisie===i?"true":"false"));
+  }
+  const melangees = melange(e.chips.map((_,i)=>i));
+  rendre();
+  return ()=>{ if(place.some(p=>p===null)) return null; return place.every((p,k)=>p===e.sol[k]); };
+}
+
+function fOrder(e,z){
+  const ol=document.createElement("ol"); ol.className="ordre"; z.appendChild(ol);
+  let ordre = melange(e.items.map((_,i)=>i));
+  while(ordre.every((v,i)=>v===i)) ordre = melange(ordre);
+  let tire = null;
+  function rendre(focusIdx, dir){
+    ol.innerHTML="";
+    ordre.forEach((it,pos)=>{
+      const li=document.createElement("li"); li.draggable=true;
+      const sp=document.createElement("span"); sp.textContent=e.items[it];
+      const up=document.createElement("button"); up.type="button"; up.textContent="↑"; up.setAttribute("aria-label",`Monter ${e.items[it]}`);
+      const dn=document.createElement("button"); dn.type="button"; dn.textContent="↓"; dn.setAttribute("aria-label",`Descendre ${e.items[it]}`);
+      up.disabled = pos===0; dn.disabled = pos===ordre.length-1;
+      up.onclick=()=>{ [ordre[pos-1],ordre[pos]]=[ordre[pos],ordre[pos-1]]; rendre(pos-1,"up"); };
+      dn.onclick=()=>{ [ordre[pos+1],ordre[pos]]=[ordre[pos],ordre[pos+1]]; rendre(pos+1,"dn"); };
+      li.addEventListener("dragstart",()=>{ tire=pos; });
+      li.addEventListener("dragover",ev=>ev.preventDefault());
+      li.addEventListener("drop",ev=>{ ev.preventDefault(); if(tire===null) return; const [m]=ordre.splice(tire,1); ordre.splice(pos,0,m); tire=null; rendre(); });
+      li.append(sp,up,dn); ol.appendChild(li);
+      if(focusIdx===pos){ setTimeout(()=>{ const b = dir==="up"?up:dn; (b.disabled?(dir==="up"?dn:up):b).focus(); },0); }
+    });
+  }
+  rendre();
+  return ()=> ordre.every((v,i)=>v===i) || (e.alt||[]).some(o=>o.every((v,i)=>ordre[i]===v));
+}
+
+function fCross(e,z){
+  const sol={}, cells={}, mots=[];
+  e.words.forEach(w=>{ const m={...w, cases:[]};
+    for(let k=0;k<w.w.length;k++){ const r=w.r+(w.d==="v"?k:0), c=w.c+(w.d==="h"?k:0); const key=r+"-"+c; sol[key]=w.w[k]; m.cases.push(key); }
+    mots.push(m); });
+  const g=document.createElement("div"); g.className="mc"; g.style.gridTemplateColumns=`repeat(${e.cols},auto)`;
+  let dir="h", motActif=null;
+  for(let r=0;r<e.rows;r++) for(let c=0;c<e.cols;c++){
+    const key=r+"-"+c, d=document.createElement("div"); d.className="case";
+    if(sol[key]){
+      const n=mots.find(m=>m.cases[0]===key);
+      if(n){ const sp=document.createElement("span"); sp.className="no"; sp.textContent=n.n; d.appendChild(sp); }
+      const inp=document.createElement("input"); inp.maxLength=1; inp.autocomplete="off"; inp.spellcheck=false;
+      const sesMots=mots.filter(m=>m.cases.includes(key));
+      inp.setAttribute("aria-label", sesMots.map(m=>`mot ${m.n} ${m.d==="h"?"horizontal":"vertical"}, lettre ${m.cases.indexOf(key)+1}`).join(" et "));
+      inp.addEventListener("focus",()=>{ if(!sesMots.some(m=>m.d===dir)) dir=sesMots[0].d; surligner(sesMots.find(m=>m.d===dir)); });
+      inp.addEventListener("input",()=>{ inp.value=inp.value.replace(/[^a-zA-ZÀ-ÿ]/g,"").slice(-1); inp.classList.remove("faux"); if(inp.value) avancer(key,1); });
+      inp.addEventListener("keydown",ev=>{
+        if(ev.key==="Backspace" && !inp.value){ ev.preventDefault(); avancer(key,-1,true); }
+        const fl={ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0]}[ev.key];
+        if(fl){ ev.preventDefault(); dir=fl[0]?"v":"h"; const k2=(r+fl[0])+"-"+(c+fl[1]); if(cells[k2]) cells[k2].focus(); }
+        if(ev.key==="Enter"){ ev.preventDefault(); $("bValider") && $("bValider").click(); }
+      });
+      cells[key]=inp; d.appendChild(inp);
+    }
+    g.appendChild(d);
+  }
+  function surligner(m){ motActif=m; Object.values(cells).forEach(x=>x.classList.remove("actif")); if(m) m.cases.forEach(k=>cells[k].classList.add("actif")); }
+  function avancer(key,pas,effacer){
+    const m=motActif && motActif.cases.includes(key) ? motActif : mots.find(x=>x.cases.includes(key));
+    const i=m.cases.indexOf(key)+pas; const k2=m.cases[i];
+    if(k2){ cells[k2].focus(); if(effacer) cells[k2].value=""; }
+  }
+  z.appendChild(g);
+  const defs=document.createElement("div"); defs.className="defs";
+  [["h","Horizontal"],["v","Vertical"]].filter(([d])=>mots.some(m=>m.d===d)).forEach(([d,t])=>{
+    const col=document.createElement("div"); const h=document.createElement("h3"); h.textContent=t; col.appendChild(h);
+    mots.filter(m=>m.d===d).forEach(m=>{ const b=document.createElement("button"); b.type="button";
+      b.innerHTML=`<strong>${m.n}.</strong>`; b.appendChild(document.createTextNode(m.l+` (${m.w.length} lettres)`));
+      b.onclick=()=>{ dir=m.d; const vide=m.cases.find(k=>!cells[k].value)||m.cases[0]; cells[vide].focus(); surligner(m); };
+      col.appendChild(b); });
+    defs.appendChild(col);
+  });
+  z.appendChild(defs);
+  return ()=>{
+    const ks=Object.keys(sol);
+    if(ks.some(k=>!cells[k].value)) return null;
+    let ok=true;
+    ks.forEach(k=>{ const bon = norm(cells[k].value)===norm(sol[k]); cells[k].classList.toggle("faux",!bon); if(!bon) ok=false; });
+    return ok;
+  };
+}
+
+/* ---------- mode formatrice ---------- */
+const dT = $("dlgTest");
+$("btnTest").onclick = ()=>{ $("tMsg").innerHTML=""; $("code").value=""; dT.showModal(); };
+dT.querySelector("[data-close]").onclick = ()=>dT.close();
+$("tOk").onclick = ()=>{
+  if($("code").value.trim().toUpperCase()===CODE){ S.test=true; save(); dessinerGrille(); $("tMsg").innerHTML=`<p class="msg ok">Tous les bertels sont ouverts.</p>`; }
+  else $("tMsg").innerHTML=`<p class="msg ko">Code incorrect.</p>`;
+};
+$("tReset").onclick = ()=>{ S={won:{},seen:{},test:S.test}; save(); dessinerGrille(); $("tMsg").innerHTML=`<p class="msg ok">Panier vidé.</p>`; };
+
+dessinerGrille();
+</script>
+</body>
+</html>
